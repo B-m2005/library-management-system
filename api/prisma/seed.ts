@@ -1,162 +1,60 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import 'dotenv/config';
+import { PrismaClient } from "@prisma/client";
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/mydb';
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
-  // Insert at least 4 Genre rows
-  const fiction = await prisma.genre.upsert({
-    where: { name: 'Fiction' },
-    update: {},
-    create: { name: 'Fiction' },
-  });
+  const genreNames = ["Fantasy", "Science Fiction", "Mystery", "Biography"];
+  const genres = await Promise.all(
+    genreNames.map((name) =>
+      prisma.genre.create({
+        data: { name, slug: name.toLowerCase().replace(/\s+/g, "-") },
+      }),
+    ),
+  );
 
-  const sciFi = await prisma.genre.upsert({
-    where: { name: 'Science Fiction' },
-    update: {},
-    create: { name: 'Science Fiction' },
-  });
+  const sampleBooks = [
+    // Fantasy
+    { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy" },
+    { title: "The Fellowship of the Ring", author: "J.R.R. Tolkien", genre: "Fantasy" },
+    { title: "The Name of the Wind", author: "Patrick Rothfuss", genre: "Fantasy" },
+    { title: "A Game of Thrones", author: "George R.R. Martin", genre: "Fantasy" },
 
-  const mystery = await prisma.genre.upsert({
-    where: { name: 'Mystery' },
-    update: {},
-    create: { name: 'Mystery' },
-  });
+    // Science Fiction
+    { title: "Dune", author: "Frank Herbert", genre: "Science Fiction" },
+    { title: "Neuromancer", author: "William Gibson", genre: "Science Fiction" },
+    { title: "Foundation", author: "Isaac Asimov", genre: "Science Fiction" },
+    { title: "Fahrenheit 451", author: "Ray Bradbury", genre: "Science Fiction" },
 
-  const nonFiction = await prisma.genre.upsert({
-    where: { name: 'Non-Fiction' },
-    update: {},
-    create: { name: 'Non-Fiction' },
-  });
+    // Mystery
+    { title: "The Big Sleep", author: "Raymond Chandler", genre: "Mystery" },
+    { title: "The Hound of the Baskervilles", author: "Arthur Conan Doyle", genre: "Mystery" },
+    { title: "And Then There Were None", author: "Agatha Christie", genre: "Mystery" },
+    { title: "Gone Girl", author: "Gillian Flynn", genre: "Mystery" },
 
-  // Insert at least 15 Book rows distributed across those genres (16 total, 4 per genre)
-  const books = [
-    // Fiction (4)
-    {
-      title: 'The Great Gatsby',
-      author: 'F. Scott Fitzgerald',
-      isbn: '9780743273565',
-      genreId: fiction.id,
-    },
-    {
-      title: 'To Kill a Mockingbird',
-      author: 'Harper Lee',
-      isbn: '9780061120084',
-      genreId: fiction.id,
-    },
-    {
-      title: 'Pride and Prejudice',
-      author: 'Jane Austen',
-      isbn: '9780141439518',
-      genreId: fiction.id,
-    },
-    {
-      title: 'The Catcher in the Rye',
-      author: 'J.D. Salinger',
-      isbn: '9780316769488',
-      genreId: fiction.id,
-    },
-
-    // Science Fiction (4)
-    {
-      title: 'Dune',
-      author: 'Frank Herbert',
-      isbn: '9780441013593',
-      genreId: sciFi.id,
-    },
-    {
-      title: 'Neuromancer',
-      author: 'William Gibson',
-      isbn: '9780441569595',
-      genreId: sciFi.id,
-    },
-    {
-      title: 'Foundation',
-      author: 'Isaac Asimov',
-      isbn: '9780553293357',
-      genreId: sciFi.id,
-    },
-    {
-      title: 'Fahrenheit 451',
-      author: 'Ray Bradbury',
-      isbn: '9781451673319',
-      genreId: sciFi.id,
-    },
-
-    // Mystery (4)
-    {
-      title: 'The Hound of the Baskervilles',
-      author: 'Arthur Conan Doyle',
-      isbn: '9780140437867',
-      genreId: mystery.id,
-    },
-    {
-      title: 'And Then There Were None',
-      author: 'Agatha Christie',
-      isbn: '9780062073488',
-      genreId: mystery.id,
-    },
-    {
-      title: 'The Girl with the Dragon Tattoo',
-      author: 'Stieg Larsson',
-      isbn: '9780307949486',
-      genreId: mystery.id,
-    },
-    {
-      title: 'Gone Girl',
-      author: 'Gillian Flynn',
-      isbn: '9780307588371',
-      genreId: mystery.id,
-    },
-
-    // Non-Fiction (4)
-    {
-      title: 'Sapiens: A Brief History of Humankind',
-      author: 'Yuval Noah Harari',
-      isbn: '9780062316097',
-      genreId: nonFiction.id,
-    },
-    {
-      title: 'Educated',
-      author: 'Tara Westover',
-      isbn: '9780399590504',
-      genreId: nonFiction.id,
-    },
-    {
-      title: 'Becoming',
-      author: 'Michelle Obama',
-      isbn: '9781524763138',
-      genreId: nonFiction.id,
-    },
-    {
-      title: 'Thinking, Fast and Slow',
-      author: 'Daniel Kahneman',
-      isbn: '9780374533557',
-      genreId: nonFiction.id,
-    },
+    // Biography
+    { title: "Educated", author: "Tara Westover", genre: "Biography" },
+    { title: "Steve Jobs", author: "Walter Isaacson", genre: "Biography" },
+    { title: "Becoming", author: "Michelle Obama", genre: "Biography" },
+    { title: "The Diary of a Young Girl", author: "Anne Frank", genre: "Biography" },
   ];
 
-  for (const book of books) {
-    await prisma.book.upsert({
-      where: { isbn: book.isbn },
-      update: {},
-      create: book,
+  for (const book of sampleBooks) {
+    const genre = genres.find((g) => g.name === book.genre);
+    if (!genre) throw new Error(`Genre not found for ${book.title}`);
+    await prisma.book.create({
+      data: {
+        title: book.title,
+        author: book.author,
+        isbn: `978${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+        description: `${book.title} by ${book.author}.`,
+        totalCopies: 3,
+        availableCopies: 3,
+        genreId: genre.id,
+      },
     });
   }
-
-  console.log(`Seeding finished. Inserted 4 genres and ${books.length} books.`);
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
-  .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
-
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
