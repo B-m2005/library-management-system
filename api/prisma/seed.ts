@@ -39,7 +39,7 @@ async function main() {
   ];
 
   for (const book of sampleBooks) {
-    const genre = genres.find((g) => g.name === book.genre);
+    const genre = genres.find((g: any) => g.name === book.genre);
     if (!genre) throw new Error(`Genre not found for ${book.title}`);
     await prisma.book.create({
       data: {
