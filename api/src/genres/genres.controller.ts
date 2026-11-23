@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { GenresService } from './genres.service.js';
 import { CreateGenreDto } from './dto/create-genre.dto.js';
@@ -32,6 +33,7 @@ export class GenresController {
   }
 
   @Patch(':id')
+  @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateGenreDto: UpdateGenreDto,

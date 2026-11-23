@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -52,6 +53,7 @@ export class BooksController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.LIBRARIAN)
   @Patch(':id')
+  @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateBookDto: UpdateBookDto,

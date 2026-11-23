@@ -13,9 +13,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: number; email: string; role: string }) {
+  async validate(payload: { sub: number | string; email: string; role: string }) {
+    const userId = typeof payload.sub === 'string' ? parseInt(payload.sub, 10) : payload.sub;
     const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
+      where: { id: userId },
     });
 
     if (!user) {
